@@ -13,6 +13,17 @@ BUILD_ITERATION := $(shell git log $(BUILD_TAG)..HEAD --oneline | wc -l | sed 's
 GIT_REMOTE_URL := $(shell git config --get remote.origin.url)
 GO_PACKAGE_NAME := $(shell echo $(GIT_REMOTE_URL) | sed -e 's|^git@github.com:|github.com/|' -e 's|\.git$$||' -e 's|Senzing|senzing|')
 
+# Recursive assignment ('=')
+
+CC = gcc
+
+# Conditional assignment. ('?=')
+# Can be overridden with "export"
+# Example: "export LD_LIBRARY_PATH=/path/to/my/senzing/g2/lib"
+
+LD_LIBRARY_PATH ?= /opt/senzing/g2/lib
+SENZING_TOOLS_DATABASE_URL ?= sqlite3://na:na@/tmp/sqlite/G2C.db
+
 # Export environment variables.
 
 .EXPORT_ALL_VARIABLES:

@@ -8,8 +8,8 @@ import (
 // Types
 // ----------------------------------------------------------------------------
 
-// The HttpService interface is...
-type HttpService interface {
+// The RestApiService interface is...
+type RestApiService interface {
 	senzingrestapi.Handler
 }
 
@@ -21,7 +21,7 @@ type HttpService interface {
 const ComponentId = 9999
 
 // Log message prefix.
-const Prefix = "serve-http.httpservice."
+const Prefix = "serve-http.restapiservice."
 
 // ----------------------------------------------------------------------------
 // Variables

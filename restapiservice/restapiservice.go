@@ -21,8 +21,8 @@ import (
 // Types
 // ----------------------------------------------------------------------------
 
-// HttpServiceImpl is...
-type HttpServiceImpl struct {
+// RestApiServiceImpl is...
+type RestApiServiceImpl struct {
 	api.UnimplementedHandler
 	abstractFactory                factory.SdkAbstractFactory
 	abstractFactorySyncOnce        sync.Once
@@ -64,107 +64,107 @@ var defaultModuleName string = "init-database"
 // --- Logging ----------------------------------------------------------------
 
 // Get the Logger singleton.
-func (httpService *HttpServiceImpl) getLogger() logging.LoggingInterface {
+func (restApiService *RestApiServiceImpl) getLogger() logging.LoggingInterface {
 	var err error = nil
-	if httpService.logger == nil {
+	if restApiService.logger == nil {
 		loggerOptions := []interface{}{
 			&logging.OptionCallerSkip{Value: 3},
 		}
-		httpService.logger, err = logging.NewSenzingToolsLogger(ComponentId, IdMessages, loggerOptions...)
+		restApiService.logger, err = logging.NewSenzingToolsLogger(ComponentId, IdMessages, loggerOptions...)
 		if err != nil {
 			panic(err)
 		}
 	}
-	return httpService.logger
+	return restApiService.logger
 }
 
 // Log message.
-func (httpService *HttpServiceImpl) log(messageNumber int, details ...interface{}) {
-	httpService.getLogger().Log(messageNumber, details...)
+func (restApiService *RestApiServiceImpl) log(messageNumber int, details ...interface{}) {
+	restApiService.getLogger().Log(messageNumber, details...)
 }
 
 // Debug.
-func (httpService *HttpServiceImpl) debug(messageNumber int, details ...interface{}) {
+func (restApiService *RestApiServiceImpl) debug(messageNumber int, details ...interface{}) {
 	details = append(details, debugOptions...)
-	httpService.getLogger().Log(messageNumber, details...)
+	restApiService.getLogger().Log(messageNumber, details...)
 }
 
 // Trace method entry.
-func (httpService *HttpServiceImpl) traceEntry(messageNumber int, details ...interface{}) {
-	httpService.getLogger().Log(messageNumber, details...)
+func (restApiService *RestApiServiceImpl) traceEntry(messageNumber int, details ...interface{}) {
+	restApiService.getLogger().Log(messageNumber, details...)
 }
 
 // Trace method exit.
-func (httpService *HttpServiceImpl) traceExit(messageNumber int, details ...interface{}) {
-	httpService.getLogger().Log(messageNumber, details...)
+func (restApiService *RestApiServiceImpl) traceExit(messageNumber int, details ...interface{}) {
+	restApiService.getLogger().Log(messageNumber, details...)
 }
 
 // --- Errors -----------------------------------------------------------------
 
 // Create error.
-func (httpService *HttpServiceImpl) error(messageNumber int, details ...interface{}) error {
-	return httpService.getLogger().NewError(messageNumber, details...)
+func (restApiService *RestApiServiceImpl) error(messageNumber int, details ...interface{}) error {
+	return restApiService.getLogger().NewError(messageNumber, details...)
 }
 
 // --- Services ---------------------------------------------------------------
 
-func (httpService *HttpServiceImpl) getAbstractFactory() factory.SdkAbstractFactory {
-	httpService.abstractFactorySyncOnce.Do(func() {
-		if len(httpService.GrpcTarget) == 0 {
-			httpService.abstractFactory = &factory.SdkAbstractFactoryImpl{}
+func (restApiService *RestApiServiceImpl) getAbstractFactory() factory.SdkAbstractFactory {
+	restApiService.abstractFactorySyncOnce.Do(func() {
+		if len(restApiService.GrpcTarget) == 0 {
+			restApiService.abstractFactory = &factory.SdkAbstractFactoryImpl{}
 		} else {
-			httpService.abstractFactory = &factory.SdkAbstractFactoryImpl{
-				GrpcDialOptions: httpService.GrpcDialOptions,
-				GrpcTarget:      httpService.GrpcTarget,
-				ObserverOrigin:  httpService.ObserverOrigin,
-				Observers:       httpService.Observers,
+			restApiService.abstractFactory = &factory.SdkAbstractFactoryImpl{
+				GrpcDialOptions: restApiService.GrpcDialOptions,
+				GrpcTarget:      restApiService.GrpcTarget,
+				ObserverOrigin:  restApiService.ObserverOrigin,
+				Observers:       restApiService.Observers,
 			}
 		}
 	})
-	return httpService.abstractFactory
+	return restApiService.abstractFactory
 }
 
 // Singleton pattern for g2config.
 // See https://medium.com/golang-issue/how-singleton-pattern-works-with-golang-2fdd61cd5a7f
-func (httpService *HttpServiceImpl) getG2config(ctx context.Context) g2api.G2config {
+func (restApiService *RestApiServiceImpl) getG2config(ctx context.Context) g2api.G2config {
 	var err error = nil
-	httpService.g2configSyncOnce.Do(func() {
-		httpService.g2configSingleton, err = httpService.getAbstractFactory().GetG2config(ctx)
+	restApiService.g2configSyncOnce.Do(func() {
+		restApiService.g2configSingleton, err = restApiService.getAbstractFactory().GetG2config(ctx)
 		if err != nil {
 			panic(err)
 		}
-		if httpService.g2configSingleton.GetSdkId(ctx) == factory.ImplementedByBase {
-			err = httpService.g2configSingleton.Init(ctx, httpService.SenzingModuleName, httpService.SenzingEngineConfigurationJson, httpService.SenzingVerboseLogging)
+		if restApiService.g2configSingleton.GetSdkId(ctx) == factory.ImplementedByBase {
+			err = restApiService.g2configSingleton.Init(ctx, restApiService.SenzingModuleName, restApiService.SenzingEngineConfigurationJson, restApiService.SenzingVerboseLogging)
 			if err != nil {
 				panic(err)
 			}
 		}
 	})
-	return httpService.g2configSingleton
+	return restApiService.g2configSingleton
 }
 
 // Singleton pattern for g2config.
 // See https://medium.com/golang-issue/how-singleton-pattern-works-with-golang-2fdd61cd5a7f
-func (httpService *HttpServiceImpl) getG2configmgr(ctx context.Context) g2api.G2configmgr {
+func (restApiService *RestApiServiceImpl) getG2configmgr(ctx context.Context) g2api.G2configmgr {
 	var err error = nil
-	httpService.g2configmgrSyncOnce.Do(func() {
-		httpService.g2configmgrSingleton, err = httpService.getAbstractFactory().GetG2configmgr(ctx)
+	restApiService.g2configmgrSyncOnce.Do(func() {
+		restApiService.g2configmgrSingleton, err = restApiService.getAbstractFactory().GetG2configmgr(ctx)
 		if err != nil {
 			panic(err)
 		}
-		if httpService.g2configmgrSingleton.GetSdkId(ctx) == factory.ImplementedByBase {
-			err = httpService.g2configmgrSingleton.Init(ctx, httpService.SenzingModuleName, httpService.SenzingEngineConfigurationJson, httpService.SenzingVerboseLogging)
+		if restApiService.g2configmgrSingleton.GetSdkId(ctx) == factory.ImplementedByBase {
+			err = restApiService.g2configmgrSingleton.Init(ctx, restApiService.SenzingModuleName, restApiService.SenzingEngineConfigurationJson, restApiService.SenzingVerboseLogging)
 			if err != nil {
 				panic(err)
 			}
 		}
 	})
-	return httpService.g2configmgrSingleton
+	return restApiService.g2configmgrSingleton
 }
 
 // --- Misc -------------------------------------------------------------------
 
-func (httpService *HttpServiceImpl) getOptSzLinks() api.OptSzLinks {
+func (restApiService *RestApiServiceImpl) getOptSzLinks() api.OptSzLinks {
 	var result api.OptSzLinks
 	szLinks := api.SzLinks{
 		Self:                 api.NewOptString("SelfBob"),
@@ -174,7 +174,7 @@ func (httpService *HttpServiceImpl) getOptSzLinks() api.OptSzLinks {
 	return result
 }
 
-func (httpService *HttpServiceImpl) getOptSzMeta() api.OptSzMeta {
+func (restApiService *RestApiServiceImpl) getOptSzMeta() api.OptSzMeta {
 	var result api.OptSzMeta
 	szMeta := api.SzMeta{
 		Server:                     api.NewOptString("ServerBob"),
@@ -199,12 +199,12 @@ func (httpService *HttpServiceImpl) getOptSzMeta() api.OptSzMeta {
 // See https://github.com/docktermj/go-rest-api-client/blob/main/senzingrestpapi/oas_unimplemented_gen.go
 // ----------------------------------------------------------------------------
 
-func (httpService *HttpServiceImpl) AddDataSources(ctx context.Context, req api.AddDataSourcesReq, params api.AddDataSourcesParams) (r api.AddDataSourcesRes, _ error) {
+func (restApiService *RestApiServiceImpl) AddDataSources(ctx context.Context, req api.AddDataSourcesReq, params api.AddDataSourcesParams) (r api.AddDataSourcesRes, _ error) {
 	var err error = nil
-	if httpService.isTrace {
+	if restApiService.isTrace {
 		entryTime := time.Now()
-		httpService.traceEntry(99)
-		defer func() { httpService.traceExit(99, err, time.Since(entryTime)) }()
+		restApiService.traceEntry(99)
+		defer func() { restApiService.traceExit(99, err, time.Since(entryTime)) }()
 	}
 
 	// URL parameters.
@@ -217,24 +217,24 @@ func (httpService *HttpServiceImpl) AddDataSources(ctx context.Context, req api.
 
 	// Get Senzing resources.
 
-	g2Config := httpService.getG2config(ctx)
-	g2Configmgr := httpService.getG2configmgr(ctx)
+	g2Config := restApiService.getG2config(ctx)
+	g2Configmgr := restApiService.getG2configmgr(ctx)
 
 	// Get an in-memory version of the existing Senzing configuration.
 
 	configID, err := g2Configmgr.GetDefaultConfigID(ctx)
 	if err != nil {
-		httpService.log(9999, dataSource, withRaw, err)
+		restApiService.log(9999, dataSource, withRaw, err)
 	}
 
 	configurationString, err := g2Configmgr.GetConfig(ctx, configID)
 	if err != nil {
-		httpService.log(9999, dataSource, withRaw, err)
+		restApiService.log(9999, dataSource, withRaw, err)
 	}
 
 	configurationHandle, err := g2Config.Load(ctx, configurationString)
 	if err != nil {
-		httpService.log(9999, dataSource, withRaw, err)
+		restApiService.log(9999, dataSource, withRaw, err)
 	}
 
 	// Add DataSouces to in-memory version of Senzing Configuration.
@@ -256,15 +256,15 @@ func (httpService *HttpServiceImpl) AddDataSources(ctx context.Context, req api.
 
 	newConfigurationString, err := g2Config.Save(ctx, configurationHandle)
 	if err != nil {
-		httpService.log(9999, dataSource, withRaw, err)
+		restApiService.log(9999, dataSource, withRaw, err)
 	}
 	newConfigId, err := g2Configmgr.AddConfig(ctx, newConfigurationString, "FIXME: description")
 	if err != nil {
-		httpService.log(9999, dataSource, withRaw, err)
+		restApiService.log(9999, dataSource, withRaw, err)
 	}
 	err = g2Configmgr.SetDefaultConfigID(ctx, newConfigId)
 	if err != nil {
-		httpService.log(9999, dataSource, withRaw, err)
+		restApiService.log(9999, dataSource, withRaw, err)
 	}
 
 	// Retrieve all DataSources
@@ -362,11 +362,11 @@ func (httpService *HttpServiceImpl) AddDataSources(ctx context.Context, req api.
 	return r, err
 }
 
-func (httpService *HttpServiceImpl) Heartbeat(ctx context.Context) (r *api.SzBaseResponse, _ error) {
+func (restApiService *RestApiServiceImpl) Heartbeat(ctx context.Context) (r *api.SzBaseResponse, _ error) {
 	var err error = nil
 	r = &api.SzBaseResponse{
-		Links: httpService.getOptSzLinks(),
-		Meta:  httpService.getOptSzMeta(),
+		Links: restApiService.getOptSzLinks(),
+		Meta:  restApiService.getOptSzMeta(),
 	}
 	return r, err
 }
