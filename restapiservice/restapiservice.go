@@ -3,7 +3,6 @@ package restapiservice
 import (
 	"context"
 	"fmt"
-	"reflect"
 
 	// "fmt"
 	"sync"
@@ -194,6 +193,49 @@ func (restApiService *RestApiServiceImpl) getOptSzMeta() api.OptSzMeta {
 	return result
 }
 
+// --- Senzing convenience ----------------------------------------------------
+
+// Pull the Senzing Configuration from the database into an in-memory copy.
+func (restApiService *RestApiServiceImpl) getConfigurationHandle(ctx context.Context) (uintptr, error) {
+	var err error = nil
+	var result uintptr
+	g2Config := restApiService.getG2config(ctx)
+	g2Configmgr := restApiService.getG2configmgr(ctx)
+	configID, err := g2Configmgr.GetDefaultConfigID(ctx)
+	if err != nil {
+		return result, err
+	}
+	configurationString, err := g2Configmgr.GetConfig(ctx, configID)
+	if err != nil {
+		return result, err
+	}
+	result, err = g2Config.Load(ctx, configurationString)
+	if err != nil {
+		return result, err
+	}
+	return result, err
+}
+
+// Persist in-memory Senzing Configuration to Senzing database SYS_CFG table.
+func (restApiService *RestApiServiceImpl) persistConfiguration(ctx context.Context, configurationHandle uintptr) error {
+	var err error = nil
+	g2Config := restApiService.getG2config(ctx)
+	g2Configmgr := restApiService.getG2configmgr(ctx)
+	newConfigurationString, err := g2Config.Save(ctx, configurationHandle)
+	if err != nil {
+		return err
+	}
+	newConfigId, err := g2Configmgr.AddConfig(ctx, newConfigurationString, "FIXME: description")
+	if err != nil {
+		return err
+	}
+	err = g2Configmgr.SetDefaultConfigID(ctx, newConfigId)
+	if err != nil {
+		return err
+	}
+	return err
+}
+
 // ----------------------------------------------------------------------------
 // Interface methods
 // See https://github.com/docktermj/go-rest-api-client/blob/main/senzingrestpapi/oas_unimplemented_gen.go
@@ -209,32 +251,18 @@ func (restApiService *RestApiServiceImpl) AddDataSources(ctx context.Context, re
 
 	// URL parameters.
 
-	dataSource := params.DataSource
+	dataSources := params.DataSource
 	withRaw := params.WithRaw
-
-	fmt.Printf(">>>>>> %+v\n", params)
-	fmt.Printf(">>>>>> type: %s   value: %v\n", reflect.TypeOf(params.DataSource), params.DataSource)
 
 	// Get Senzing resources.
 
 	g2Config := restApiService.getG2config(ctx)
-	g2Configmgr := restApiService.getG2configmgr(ctx)
 
-	// Get an in-memory version of the existing Senzing configuration.
+	// Get current configuration from database into memory.
 
-	configID, err := g2Configmgr.GetDefaultConfigID(ctx)
+	configurationHandle, err := restApiService.getConfigurationHandle(ctx)
 	if err != nil {
-		restApiService.log(9999, dataSource, withRaw, err)
-	}
-
-	configurationString, err := g2Configmgr.GetConfig(ctx, configID)
-	if err != nil {
-		restApiService.log(9999, dataSource, withRaw, err)
-	}
-
-	configurationHandle, err := g2Config.Load(ctx, configurationString)
-	if err != nil {
-		restApiService.log(9999, dataSource, withRaw, err)
+		restApiService.log(9999, dataSources, withRaw, err)
 	}
 
 	// Add DataSouces to in-memory version of Senzing Configuration.
@@ -242,9 +270,6 @@ func (restApiService *RestApiServiceImpl) AddDataSources(ctx context.Context, re
 	sdkResponses := []string{}
 	for _, dataSource := range params.DataSource {
 		sdkRequest := fmt.Sprintf(`{"DSRC_CODE": "%s"}`, dataSource)
-
-		fmt.Printf(">>>>>> sdkRequest: %s; configurationHandle: %v\n", sdkRequest, configurationHandle)
-
 		sdkResponse, err := g2Config.AddDataSource(ctx, configurationHandle, sdkRequest)
 		if err != nil {
 			return r, err
@@ -254,18 +279,12 @@ func (restApiService *RestApiServiceImpl) AddDataSources(ctx context.Context, re
 
 	// Persist in-memory Senzing Configuration to Senzing database SYS_CFG table.
 
-	newConfigurationString, err := g2Config.Save(ctx, configurationHandle)
+	err = restApiService.persistConfiguration(ctx, configurationHandle)
 	if err != nil {
-		restApiService.log(9999, dataSource, withRaw, err)
+		restApiService.log(9999, dataSources, withRaw, err)
 	}
-	newConfigId, err := g2Configmgr.AddConfig(ctx, newConfigurationString, "FIXME: description")
-	if err != nil {
-		restApiService.log(9999, dataSource, withRaw, err)
-	}
-	err = g2Configmgr.SetDefaultConfigID(ctx, newConfigId)
-	if err != nil {
-		restApiService.log(9999, dataSource, withRaw, err)
-	}
+
+	// Construct response.
 
 	// Retrieve all DataSources
 

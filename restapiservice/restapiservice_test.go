@@ -87,21 +87,22 @@ func TestRestApiServiceImpl_AddDataSources(test *testing.T) {
 	testError(test, ctx, err)
 	switch responseTyped := response.(type) {
 	case *api.SzDataSourcesResponse:
+		if false {
+			drillDown := []interface{}{
+				response,
+				responseTyped,
+				responseTyped.Data,
+				responseTyped.Data.Value,
+				responseTyped.Data.Value.DataSourceDetails,
+				responseTyped.Data.Value.DataSourceDetails.Value,
+				responseTyped.Data.Value.DataSourceDetails.Value["xxxBob"],
+				responseTyped.Data.Value.DataSourceDetails.Value["xxxBob"].DataSourceCode,
+				responseTyped.Data.Value.DataSourceDetails.Value["xxxBob"].DataSourceCode.Value,
+			}
 
-		drillDown := []interface{}{
-			response,
-			responseTyped,
-			responseTyped.Data,
-			responseTyped.Data.Value,
-			responseTyped.Data.Value.DataSourceDetails,
-			responseTyped.Data.Value.DataSourceDetails.Value,
-			responseTyped.Data.Value.DataSourceDetails.Value["xxxBob"],
-			responseTyped.Data.Value.DataSourceDetails.Value["xxxBob"].DataSourceCode,
-			responseTyped.Data.Value.DataSourceDetails.Value["xxxBob"].DataSourceCode.Value,
-		}
-
-		for index, value := range drillDown {
-			test.Logf(">>>>> %d: %-60s %+v\n", index, reflect.TypeOf(value), value)
+			for index, value := range drillDown {
+				test.Logf(">>>>> %d: %-60s %+v\n", index, reflect.TypeOf(value), value)
+			}
 		}
 	}
 }
