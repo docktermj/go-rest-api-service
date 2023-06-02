@@ -2,7 +2,9 @@ package restapiservice
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 
 	// "fmt"
 	"sync"
@@ -10,6 +12,7 @@ import (
 
 	api "github.com/docktermj/go-rest-api-client/senzingrestapi"
 	"github.com/senzing/g2-sdk-go/g2api"
+	"github.com/senzing/g2-sdk-go/g2struct"
 	"github.com/senzing/go-logging/logging"
 	"github.com/senzing/go-observing/observer"
 	"github.com/senzing/go-sdk-abstract-factory/factory"
@@ -29,6 +32,8 @@ type RestApiServiceImpl struct {
 	g2configmgrSyncOnce            sync.Once
 	g2configSingleton              g2api.G2config
 	g2configSyncOnce               sync.Once
+	g2productSingleton             g2api.G2product
+	g2productSyncOnce              sync.Once
 	GrpcDialOptions                []grpc.DialOption
 	GrpcTarget                     string
 	isTrace                        bool
@@ -40,6 +45,7 @@ type RestApiServiceImpl struct {
 	SenzingEngineConfigurationJson string
 	SenzingModuleName              string
 	SenzingVerboseLogging          int
+	UrlRoutePrefix                 string
 }
 
 // ----------------------------------------------------------------------------
@@ -161,32 +167,62 @@ func (restApiService *RestApiServiceImpl) getG2configmgr(ctx context.Context) g2
 	return restApiService.g2configmgrSingleton
 }
 
+// Singleton pattern for g2product.
+// See https://medium.com/golang-issue/how-singleton-pattern-works-with-golang-2fdd61cd5a7f
+func (restApiService *RestApiServiceImpl) getG2product(ctx context.Context) g2api.G2product {
+	var err error = nil
+	restApiService.g2productSyncOnce.Do(func() {
+		restApiService.g2productSingleton, err = restApiService.getAbstractFactory().GetG2product(ctx)
+		if err != nil {
+			panic(err)
+		}
+		if restApiService.g2productSingleton.GetSdkId(ctx) == factory.ImplementedByBase {
+			err = restApiService.g2productSingleton.Init(ctx, restApiService.SenzingModuleName, restApiService.SenzingEngineConfigurationJson, restApiService.SenzingVerboseLogging)
+			if err != nil {
+				panic(err)
+			}
+		}
+	})
+	return restApiService.g2productSingleton
+}
+
 // --- Misc -------------------------------------------------------------------
 
-func (restApiService *RestApiServiceImpl) getOptSzLinks() api.OptSzLinks {
+func (restApiService *RestApiServiceImpl) getOptSzLinks(ctx context.Context, uriPath string) api.OptSzLinks {
 	var result api.OptSzLinks
 	szLinks := api.SzLinks{
-		Self:                 api.NewOptString("SelfBob"),
-		OpenApiSpecification: api.NewOptString("OpenApiSpecificationBob"),
+		Self:                 api.NewOptString(fmt.Sprintf("http://%s/%s/%s", getHostname(ctx), restApiService.UrlRoutePrefix, uriPath)),
+		OpenApiSpecification: api.NewOptString(fmt.Sprintf("http://%s/%s/swagger_spec", getHostname(ctx), restApiService.UrlRoutePrefix)),
 	}
 	result = api.NewOptSzLinks(szLinks)
 	return result
 }
 
-func (restApiService *RestApiServiceImpl) getOptSzMeta() api.OptSzMeta {
+func (restApiService *RestApiServiceImpl) getOptSzMeta(ctx context.Context, httpMethod api.SzHttpMethod, httpStatusCode int) api.OptSzMeta {
 	var result api.OptSzMeta
+
+	senzingVersion, err := restApiService.getSenzingVersion(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	nativeApiBuildDate, err := time.Parse("2006-01-02", senzingVersion.BuildDate)
+	if err != nil {
+		panic(err)
+	}
+
 	szMeta := api.SzMeta{
-		Server:                     api.NewOptString("ServerBob"),
-		HttpMethod:                 api.NewOptSzHttpMethod(api.SzHttpMethodGET),
-		HttpStatusCode:             api.NewOptInt(200),
-		Timestamp:                  api.NewOptDateTime(time.Now()),
-		Version:                    api.NewOptString("VersionBob"),
-		RestApiVersion:             api.NewOptString("RestApiVersionBob"),
-		NativeApiVersion:           api.NewOptString("NativeApiVersionBob"),
-		NativeApiBuildVersion:      api.NewOptString("NativeApiBuildVersionBob"),
-		NativeApiBuildNumber:       api.NewOptString("NativeApiBuildNumberBob"),
-		NativeApiBuildDate:         api.NewOptDateTime(time.Now()),
-		ConfigCompatibilityVersion: api.NewOptString("ConfigCompatibilityVersionBob"),
+		Server:                     api.NewOptString("Senzing REST API Server - go"),
+		HttpMethod:                 api.NewOptSzHttpMethod(httpMethod),
+		HttpStatusCode:             api.NewOptInt(httpStatusCode),
+		Timestamp:                  api.NewOptDateTime(time.Now().UTC()),
+		Version:                    api.NewOptString(githubVersion),
+		RestApiVersion:             api.NewOptString("3.4.1"),
+		NativeApiVersion:           api.NewOptString(senzingVersion.Version),
+		NativeApiBuildVersion:      api.NewOptString(senzingVersion.BuildVersion),
+		NativeApiBuildNumber:       api.NewOptString(senzingVersion.BuildNumber),
+		NativeApiBuildDate:         api.NewOptDateTime(nativeApiBuildDate),
+		ConfigCompatibilityVersion: api.NewOptString(senzingVersion.CompatibilityVersion.ConfigVersion),
 		Timings:                    api.NewOptNilSzMetaTimings(map[string]int64{}),
 	}
 	result = api.NewOptSzMeta(szMeta)
@@ -234,6 +270,67 @@ func (restApiService *RestApiServiceImpl) persistConfiguration(ctx context.Conte
 		return err
 	}
 	return err
+}
+
+func (restApiService *RestApiServiceImpl) getSenzingVersion(ctx context.Context) (*g2struct.G2ProductVersionResponse, error) {
+	g2Product := restApiService.getG2product(ctx)
+	response, err := g2Product.Version(ctx)
+	responseStruct := &g2struct.G2ProductVersionResponse{}
+	err = json.Unmarshal([]byte(response), responseStruct)
+	return responseStruct, err
+}
+
+// --- Debug ------------------------------------------------------------------
+
+// func printContextInternals(ctx interface{}, inner bool) {
+// 	contextValues := reflect.ValueOf(ctx).Elem()
+// 	contextKeys := reflect.TypeOf(ctx).Elem()
+
+// 	if !inner {
+// 		fmt.Printf("\nFields for %s.%s\n", contextKeys.PkgPath(), contextKeys.Name())
+// 	}
+
+// 	if contextKeys.Kind() == reflect.Struct {
+// 		for i := 0; i < contextValues.NumField(); i++ {
+// 			reflectValue := contextValues.Field(i)
+// 			reflectValue = reflect.NewAt(reflectValue.Type(), unsafe.Pointer(reflectValue.UnsafeAddr())).Elem()
+
+// 			reflectField := contextKeys.Field(i)
+
+// 			if reflectField.Name == "Context" {
+// 				printContextInternals(reflectValue.Interface(), true)
+// 			} else {
+// 				fmt.Printf("field name: %+v\n", reflectField.Name)
+// 				fmt.Printf("value: %+v\n", reflectValue.Interface())
+// 			}
+// 		}
+// 	} else {
+// 		fmt.Printf("context is empty (int)\n")
+// 	}
+// }
+
+// type serverURLKey struct{}
+
+// func (c *Client) requestURL(ctx context.Context) *url.URL {
+// 	u, ok := ctx.Value(serverURLKey{}).(*url.URL)
+// 	if !ok {
+// 		return c.serverURL
+// 	}
+// 	return u
+// }
+
+// func requestURL(ctx context.Context) *url.URL {
+// 	// FIXME: See https://github.com/ogen-go/ogen/issues/930
+// 	u, _ := ctx.Value(serverURLKey{}).(*url.URL)
+// 	log.Printf("CONTEXT %+v", ctx)
+// 	// u, _ := ctx.Value()
+
+// 	return u
+// }
+
+func getHostname(ctx context.Context) string {
+	result := "localhost:9999"
+	return result
 }
 
 // ----------------------------------------------------------------------------
@@ -383,9 +480,26 @@ func (restApiService *RestApiServiceImpl) AddDataSources(ctx context.Context, re
 
 func (restApiService *RestApiServiceImpl) Heartbeat(ctx context.Context) (r *api.SzBaseResponse, _ error) {
 	var err error = nil
+
+	// fmt.Printf(">>>>>> Heartbeat.ctx: %+v\n", ctx)
+
+	// printContextInternals(ctx, true)
+
+	// fmt.Printf(">>>>>> request URL: %+v\n", requestURL(ctx))
+
 	r = &api.SzBaseResponse{
-		Links: restApiService.getOptSzLinks(),
-		Meta:  restApiService.getOptSzMeta(),
+		Links: restApiService.getOptSzLinks(ctx, "heartbeat"),
+		Meta:  restApiService.getOptSzMeta(ctx, api.SzHttpMethodGET, http.StatusOK),
 	}
+	return r, err
+}
+
+func (restApiService *RestApiServiceImpl) Version(ctx context.Context, params api.VersionParams) (r api.VersionRes, _ error) {
+
+	// Get Senzing resources.
+
+	senzingVersion, err := restApiService.getSenzingVersion(ctx)
+	fmt.Printf(">>>>>> Version: %+v\n", senzingVersion)
+
 	return r, err
 }
