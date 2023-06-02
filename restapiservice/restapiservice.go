@@ -1,12 +1,12 @@
 package restapiservice
 
 import (
+	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"net/http"
-
-	// "fmt"
 	"sync"
 	"time"
 
@@ -25,9 +25,9 @@ import (
 
 // RestApiServiceImpl is...
 type RestApiServiceImpl struct {
+	abstractFactory         factory.SdkAbstractFactory
+	abstractFactorySyncOnce sync.Once
 	api.UnimplementedHandler
-	abstractFactory                factory.SdkAbstractFactory
-	abstractFactorySyncOnce        sync.Once
 	g2configmgrSingleton           g2api.G2configmgr
 	g2configmgrSyncOnce            sync.Once
 	g2configSingleton              g2api.G2config
@@ -41,6 +41,7 @@ type RestApiServiceImpl struct {
 	LogLevelName                   string
 	ObserverOrigin                 string
 	Observers                      []observer.Observer
+	OpenApiSpecificationSpec       []byte
 	Port                           int
 	SenzingEngineConfigurationJson string
 	SenzingModuleName              string
@@ -59,8 +60,6 @@ var debugOptions []interface{} = []interface{}{
 var traceOptions []interface{} = []interface{}{
 	&logging.OptionCallerSkip{Value: 5},
 }
-
-var defaultModuleName string = "init-database"
 
 // ----------------------------------------------------------------------------
 // internal methods
@@ -486,9 +485,7 @@ func (restApiService *RestApiServiceImpl) Heartbeat(ctx context.Context) (r *api
 	var err error = nil
 
 	// fmt.Printf(">>>>>> Heartbeat.ctx: %+v\n", ctx)
-
 	// printContextInternals(ctx, true)
-
 	// fmt.Printf(">>>>>> request URL: %+v\n", requestURL(ctx))
 
 	r = &api.SzBaseResponse{
@@ -498,18 +495,25 @@ func (restApiService *RestApiServiceImpl) Heartbeat(ctx context.Context) (r *api
 	return r, err
 }
 
+func (restApiService *RestApiServiceImpl) OpenApiSpecification(ctx context.Context) (r api.OpenApiSpecificationOKDefault, _ error) {
+	var err error = nil
+
+	r = api.OpenApiSpecificationOKDefault{
+		Data: bytes.NewReader(restApiService.OpenApiSpecificationSpec),
+	}
+
+	return r, err
+}
+
 func (restApiService *RestApiServiceImpl) Version(ctx context.Context, params api.VersionParams) (r api.VersionRes, _ error) {
-
-	// Get Senzing resources.
-
 	senzingVersion, err := restApiService.getSenzingVersion(ctx)
-	fmt.Printf(">>>>>> Version: %+v\n", senzingVersion)
-
+	if err != nil {
+		panic(err)
+	}
 	nativeApiBuildDate, err := time.Parse("2006-01-02", senzingVersion.BuildDate)
 	if err != nil {
 		panic(err)
 	}
-
 	r = &api.SzVersionResponse{
 		Data: api.OptSzVersionInfo{
 			Set: true,
