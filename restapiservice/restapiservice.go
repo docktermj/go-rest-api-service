@@ -273,9 +273,13 @@ func (restApiService *RestApiServiceImpl) persistConfiguration(ctx context.Conte
 }
 
 func (restApiService *RestApiServiceImpl) getSenzingVersion(ctx context.Context) (*g2struct.G2ProductVersionResponse, error) {
+	var err error = nil
 	g2Product := restApiService.getG2product(ctx)
-	response, err := g2Product.Version(ctx)
 	responseStruct := &g2struct.G2ProductVersionResponse{}
+	response, err := g2Product.Version(ctx)
+	if err != nil {
+		return responseStruct, err
+	}
 	err = json.Unmarshal([]byte(response), responseStruct)
 	return responseStruct, err
 }
@@ -501,5 +505,24 @@ func (restApiService *RestApiServiceImpl) Version(ctx context.Context, params ap
 	senzingVersion, err := restApiService.getSenzingVersion(ctx)
 	fmt.Printf(">>>>>> Version: %+v\n", senzingVersion)
 
+	nativeApiBuildDate, err := time.Parse("2006-01-02", senzingVersion.BuildDate)
+	if err != nil {
+		panic(err)
+	}
+
+	r = &api.SzVersionResponse{
+		Data: api.OptSzVersionInfo{
+			Set: true,
+			Value: api.SzVersionInfo{
+				ApiServerVersion:           api.NewOptString(githubVersion),
+				RestApiVersion:             api.NewOptString("3.4.1"),
+				NativeApiVersion:           api.NewOptString(senzingVersion.Version),
+				NativeApiBuildVersion:      api.NewOptString(senzingVersion.BuildVersion),
+				NativeApiBuildNumber:       api.NewOptString(senzingVersion.BuildVersion),
+				NativeApiBuildDate:         api.NewOptDateTime(nativeApiBuildDate),
+				ConfigCompatibilityVersion: api.NewOptString(senzingVersion.CompatibilityVersion.ConfigVersion),
+			},
+		},
+	}
 	return r, err
 }
