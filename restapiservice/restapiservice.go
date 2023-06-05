@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"sync"
@@ -12,7 +11,7 @@ import (
 
 	api "github.com/docktermj/go-rest-api-client/senzingrestapi"
 	"github.com/senzing/g2-sdk-go/g2api"
-	"github.com/senzing/g2-sdk-go/g2struct"
+	"github.com/senzing/g2-sdk-go/senzing"
 	"github.com/senzing/go-logging/logging"
 	"github.com/senzing/go-observing/observer"
 	"github.com/senzing/go-sdk-abstract-factory/factory"
@@ -271,16 +270,12 @@ func (restApiService *RestApiServiceImpl) persistConfiguration(ctx context.Conte
 	return err
 }
 
-func (restApiService *RestApiServiceImpl) getSenzingVersion(ctx context.Context) (*g2struct.G2ProductVersionResponse, error) {
-	var err error = nil
-	g2Product := restApiService.getG2product(ctx)
-	responseStruct := &g2struct.G2ProductVersionResponse{}
-	response, err := g2Product.Version(ctx)
+func (restApiService *RestApiServiceImpl) getSenzingVersion(ctx context.Context) (*senzing.ProductVersionResponse, error) {
+	response, err := restApiService.getG2product(ctx).Version(ctx)
 	if err != nil {
-		return responseStruct, err
+		return nil, err
 	}
-	err = json.Unmarshal([]byte(response), responseStruct)
-	return responseStruct, err
+	return senzing.ParseProductVersionResponse(ctx, response)
 }
 
 // --- Debug ------------------------------------------------------------------
