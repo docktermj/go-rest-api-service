@@ -456,6 +456,8 @@ func (restApiService *RestApiServiceImpl) AddDataSources(ctx context.Context, re
 	// Condensed version of "r"
 
 	r = &api.SzDataSourcesResponse{
+		Links: restApiService.getOptSzLinks(ctx, "data-sources"),
+		Meta:  restApiService.getOptSzMeta(ctx, api.SzHttpMethodGET, http.StatusOK),
 		Data: api.OptSzDataSourcesResponseData{
 			Set: true,
 			Value: api.SzDataSourcesResponseData{
@@ -478,11 +480,6 @@ func (restApiService *RestApiServiceImpl) AddDataSources(ctx context.Context, re
 
 func (restApiService *RestApiServiceImpl) Heartbeat(ctx context.Context) (r *api.SzBaseResponse, _ error) {
 	var err error = nil
-
-	// fmt.Printf(">>>>>> Heartbeat.ctx: %+v\n", ctx)
-	// printContextInternals(ctx, true)
-	// fmt.Printf(">>>>>> request URL: %+v\n", requestURL(ctx))
-
 	r = &api.SzBaseResponse{
 		Links: restApiService.getOptSzLinks(ctx, "heartbeat"),
 		Meta:  restApiService.getOptSzMeta(ctx, api.SzHttpMethodGET, http.StatusOK),
@@ -490,36 +487,81 @@ func (restApiService *RestApiServiceImpl) Heartbeat(ctx context.Context) (r *api
 	return r, err
 }
 
+func (restApiService *RestApiServiceImpl) License(ctx context.Context, params api.LicenseParams) (r api.LicenseRes, _ error) {
+	response, err := restApiService.getG2product(ctx).License(ctx)
+	if err != nil {
+		return nil, err
+	}
+	parsedResponse, err := senzing.ParseProductLicenseResponse(ctx, response)
+	if err != nil {
+		return nil, err
+	}
+	issueDate, err := time.Parse("2006-01-02", parsedResponse.IssueDate)
+	if err != nil {
+		panic(err)
+	}
+	expireDate, err := time.Parse("2006-01-02", parsedResponse.ExpireDate)
+	if err != nil {
+		panic(err)
+	}
+	r = &api.SzLicenseResponse{
+		Links:   restApiService.getOptSzLinks(ctx, "license"),
+		Meta:    restApiService.getOptSzMeta(ctx, api.SzHttpMethodGET, http.StatusOK),
+		RawData: api.OptNilSzLicenseResponseRawData{},
+		Data: api.OptSzLicenseResponseData{
+			Set: true,
+			Value: api.SzLicenseResponseData{
+				License: api.OptSzLicenseInfo{
+					Set: true,
+					Value: api.SzLicenseInfo{
+						Customer:       api.NewOptString(parsedResponse.Customer),
+						Contract:       api.NewOptString(parsedResponse.Contract),
+						LicenseType:    api.NewOptString(parsedResponse.LicenseType),
+						LicenseLevel:   api.NewOptString(parsedResponse.LicenseLevel),
+						Billing:        api.NewOptString(parsedResponse.Billing),
+						IssuanceDate:   api.NewOptDateTime(issueDate),
+						ExpirationDate: api.NewOptDateTime(expireDate),
+						RecordLimit:    api.NewOptInt64(parsedResponse.RecordLimit),
+					},
+				},
+			},
+		},
+	}
+	return r, err
+}
+
 func (restApiService *RestApiServiceImpl) OpenApiSpecification(ctx context.Context) (r api.OpenApiSpecificationOKDefault, _ error) {
 	var err error = nil
-
 	r = api.OpenApiSpecificationOKDefault{
+		// Links: restApiService.getOptSzLinks(ctx, "specifications/open-api"),
+		// Meta:  restApiService.getOptSzMeta(ctx, api.SzHttpMethodGET, http.StatusOK),
 		Data: bytes.NewReader(restApiService.OpenApiSpecificationSpec),
 	}
-
 	return r, err
 }
 
 func (restApiService *RestApiServiceImpl) Version(ctx context.Context, params api.VersionParams) (r api.VersionRes, _ error) {
-	senzingVersion, err := restApiService.getSenzingVersion(ctx)
+	parsedResponse, err := restApiService.getSenzingVersion(ctx)
 	if err != nil {
 		panic(err)
 	}
-	nativeApiBuildDate, err := time.Parse("2006-01-02", senzingVersion.BuildDate)
+	nativeApiBuildDate, err := time.Parse("2006-01-02", parsedResponse.BuildDate)
 	if err != nil {
 		panic(err)
 	}
 	r = &api.SzVersionResponse{
+		Links: restApiService.getOptSzLinks(ctx, "version"),
+		Meta:  restApiService.getOptSzMeta(ctx, api.SzHttpMethodGET, http.StatusOK),
 		Data: api.OptSzVersionInfo{
 			Set: true,
 			Value: api.SzVersionInfo{
 				ApiServerVersion:           api.NewOptString(githubVersion),
 				RestApiVersion:             api.NewOptString("3.4.1"),
-				NativeApiVersion:           api.NewOptString(senzingVersion.Version),
-				NativeApiBuildVersion:      api.NewOptString(senzingVersion.BuildVersion),
-				NativeApiBuildNumber:       api.NewOptString(senzingVersion.BuildVersion),
+				NativeApiVersion:           api.NewOptString(parsedResponse.Version),
+				NativeApiBuildVersion:      api.NewOptString(parsedResponse.BuildVersion),
+				NativeApiBuildNumber:       api.NewOptString(parsedResponse.BuildVersion),
 				NativeApiBuildDate:         api.NewOptDateTime(nativeApiBuildDate),
-				ConfigCompatibilityVersion: api.NewOptString(senzingVersion.CompatibilityVersion.ConfigVersion),
+				ConfigCompatibilityVersion: api.NewOptString(parsedResponse.CompatibilityVersion.ConfigVersion),
 			},
 		},
 	}
