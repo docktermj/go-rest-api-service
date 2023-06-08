@@ -1,4 +1,4 @@
-package restapiservice
+package senzingrestservice
 
 import (
 	"context"
@@ -14,14 +14,14 @@ import (
 )
 
 var (
-	restApiServiceSingleton RestApiService
+	restApiServiceSingleton RestService
 )
 
 // ----------------------------------------------------------------------------
 // Internal functions
 // ----------------------------------------------------------------------------
 
-func getTestObject(ctx context.Context, test *testing.T) RestApiService {
+func getTestObject(ctx context.Context, test *testing.T) RestService {
 	if restApiServiceSingleton == nil {
 		senzingEngineConfigurationJson, err := g2engineconfigurationjson.BuildSimpleSystemConfigurationJson("")
 		if err != nil {

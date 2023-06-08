@@ -1,6 +1,6 @@
 // 0.2.1
 // Created by make-go-github-file.yaml on Fri Mar 31 21:16:54 UTC 2023
-package restapiservice
+package senzingrestservice
 
 var githubDate string = "2023-03-31"
 var githubIteration string = "0"

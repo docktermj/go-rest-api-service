@@ -1,4 +1,4 @@
-package restapiservice
+package senzingrestservice
 
 import (
 	"bytes"

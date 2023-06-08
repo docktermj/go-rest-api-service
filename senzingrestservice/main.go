@@ -1,4 +1,4 @@
-package restapiservice
+package senzingrestservice
 
 import (
 	"github.com/docktermj/go-rest-api-client/senzingrestapi"
@@ -8,8 +8,8 @@ import (
 // Types
 // ----------------------------------------------------------------------------
 
-// The RestApiService interface is...
-type RestApiService interface {
+// The RestService interface is...
+type RestService interface {
 	senzingrestapi.Handler
 }
 
@@ -21,7 +21,7 @@ type RestApiService interface {
 const ComponentId = 9999
 
 // Log message prefix.
-const Prefix = "serve-http.restapiservice."
+const Prefix = "go-rest-api-service.senzingrestservice."
 
 // ----------------------------------------------------------------------------
 // Variables
