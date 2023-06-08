@@ -1,6 +1,8 @@
 package senzingrestservice
 
 import (
+	_ "embed"
+
 	"github.com/docktermj/go-rest-api-client/senzingrestapi"
 )
 
@@ -34,3 +36,9 @@ var IdMessages = map[int]string{
 
 // Status strings for specific messages.
 var IdStatuses = map[int]string{}
+
+//go:embed openapi.json
+var OpenApiSpecificationJson []byte
+
+//go:embed openapi.yaml
+var OpenApiSpecificationYaml []byte
