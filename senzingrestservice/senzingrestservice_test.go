@@ -15,6 +15,7 @@ import (
 
 var (
 	restApiServiceSingleton RestService
+	debug                   bool = false
 )
 
 // ----------------------------------------------------------------------------
@@ -85,9 +86,10 @@ func TestRestApiServiceImpl_AddDataSources(test *testing.T) {
 	}
 	response, err := testObject.AddDataSources(ctx, request, params)
 	testError(test, ctx, err)
+
 	switch responseTyped := response.(type) {
 	case *api.SzDataSourcesResponse:
-		if false {
+		if debug {
 			drillDown := []interface{}{
 				response,
 				responseTyped,
