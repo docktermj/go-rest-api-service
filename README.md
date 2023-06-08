@@ -21,7 +21,7 @@ Instructions are at
 1. Down latest version of
    [senzing-rest-api.yaml](https://raw.githubusercontent.com/Senzing/senzing-rest-api-specification/main/senzing-rest-api.yaml)
    to
-   [restapiservice/openapi.yaml(https://github.com/docktermj/go-rest-api-service/blob/main/restapiservice/openapi.yaml)
+   [restapiservice/openapi.yaml](https://github.com/docktermj/go-rest-api-service/blob/main/restapiservice/openapi.yaml).
 
 1. Create `generate.go`
 
