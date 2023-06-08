@@ -6,7 +6,7 @@ require (
 	github.com/go-faster/errors v0.6.1
 	github.com/go-faster/jx v1.0.0
 	github.com/ogen-go/ogen v0.68.4
-	github.com/senzing/g2-sdk-go v0.6.4
+	github.com/senzing/g2-sdk-go v0.6.5-0.20230605212343-7516a3ae79ba
 	github.com/senzing/go-common v0.1.3
 	github.com/senzing/go-logging v1.2.5
 	github.com/senzing/go-observing v0.2.5
@@ -50,5 +50,3 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/senzing/g2-sdk-go v0.6.4 => /home/senzing/senzing.git/g2-sdk-go

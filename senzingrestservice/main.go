@@ -10,8 +10,8 @@ import (
 // Types
 // ----------------------------------------------------------------------------
 
-// The RestService interface is...
-type RestService interface {
+// The SenzingRestService interface is...
+type SenzingRestService interface {
 	senzingrestapi.Handler
 }
 

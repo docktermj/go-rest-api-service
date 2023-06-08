@@ -14,27 +14,27 @@ import (
 )
 
 var (
-	restApiServiceSingleton RestService
-	debug                   bool = false
+	senzingRestServiceSingleton SenzingRestService
+	debug                       bool = false
 )
 
 // ----------------------------------------------------------------------------
 // Internal functions
 // ----------------------------------------------------------------------------
 
-func getTestObject(ctx context.Context, test *testing.T) RestService {
-	if restApiServiceSingleton == nil {
+func getTestObject(ctx context.Context, test *testing.T) SenzingRestService {
+	if senzingRestServiceSingleton == nil {
 		senzingEngineConfigurationJson, err := g2engineconfigurationjson.BuildSimpleSystemConfigurationJson("")
 		if err != nil {
 			test.Errorf("Error: %s", err)
 		}
-		restApiServiceSingleton = &RestApiServiceImpl{
+		senzingRestServiceSingleton = &SenzingRestServiceImpl{
 			SenzingEngineConfigurationJson: senzingEngineConfigurationJson,
 			SenzingModuleName:              "go-rest-api-service-test",
 			SenzingVerboseLogging:          0,
 		}
 	}
-	return restApiServiceSingleton
+	return senzingRestServiceSingleton
 }
 
 func testError(test *testing.T, ctx context.Context, err error) {
@@ -76,7 +76,7 @@ func teardown() error {
 // Test interface functions
 // ----------------------------------------------------------------------------
 
-func TestRestApiServiceImpl_AddDataSources(test *testing.T) {
+func TestSenzingRestServiceImpl_AddDataSources(test *testing.T) {
 	ctx := context.TODO()
 	dataSourceName := fmt.Sprintf("DS-%d", time.Now().Unix())
 	testObject := getTestObject(ctx, test)
@@ -109,7 +109,7 @@ func TestRestApiServiceImpl_AddDataSources(test *testing.T) {
 	}
 }
 
-func TestRestApiServiceImpl_Heartbeat(test *testing.T) {
+func TestSenzingRestServiceImpl_Heartbeat(test *testing.T) {
 	ctx := context.TODO()
 	testObject := getTestObject(ctx, test)
 	response, err := testObject.Heartbeat(ctx)
@@ -123,6 +123,6 @@ func TestRestApiServiceImpl_Heartbeat(test *testing.T) {
 // Examples for godoc documentation
 // ----------------------------------------------------------------------------
 
-func ExampleRestApiServiceImpl_Heartbeat() {
+func ExampleSenzingRestServiceImpl_Heartbeat() {
 
 }
