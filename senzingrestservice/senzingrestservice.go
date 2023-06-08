@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	api "github.com/docktermj/go-rest-api-client/senzingrestapi"
+	api "github.com/docktermj/go-rest-api-service/senzingrestapi"
 	"github.com/senzing/g2-sdk-go/g2api"
 	"github.com/senzing/g2-sdk-go/senzing"
 	"github.com/senzing/go-logging/logging"
@@ -214,7 +214,7 @@ func (restApiService *RestApiServiceImpl) getOptSzMeta(ctx context.Context, http
 		HttpMethod:                 api.NewOptSzHttpMethod(httpMethod),
 		HttpStatusCode:             api.NewOptInt(httpStatusCode),
 		Timestamp:                  api.NewOptDateTime(time.Now().UTC()),
-		Version:                    api.NewOptString(githubVersion),
+		Version:                    api.NewOptString("0.0.0"),
 		RestApiVersion:             api.NewOptString("3.4.1"),
 		NativeApiVersion:           api.NewOptString(senzingVersion.Version),
 		NativeApiBuildVersion:      api.NewOptString(senzingVersion.BuildVersion),
@@ -559,7 +559,7 @@ func (restApiService *RestApiServiceImpl) Version(ctx context.Context, params ap
 		Data: api.OptSzVersionInfo{
 			Set: true,
 			Value: api.SzVersionInfo{
-				ApiServerVersion:           api.NewOptString(githubVersion),
+				ApiServerVersion:           api.NewOptString("0.0.0"),
 				RestApiVersion:             api.NewOptString("3.4.1"),
 				NativeApiVersion:           api.NewOptString(parsedResponse.Version),
 				NativeApiBuildVersion:      api.NewOptString(parsedResponse.BuildVersion),

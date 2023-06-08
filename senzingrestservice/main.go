@@ -3,7 +3,7 @@ package senzingrestservice
 import (
 	_ "embed"
 
-	"github.com/docktermj/go-rest-api-client/senzingrestapi"
+	"github.com/docktermj/go-rest-api-service/senzingrestapi"
 )
 
 // ----------------------------------------------------------------------------

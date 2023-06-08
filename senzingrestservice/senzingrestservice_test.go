@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	api "github.com/docktermj/go-rest-api-client/senzingrestapi"
+	api "github.com/docktermj/go-rest-api-service/senzingrestapi"
 	"github.com/senzing/go-common/g2engineconfigurationjson"
 	"github.com/stretchr/testify/assert"
 )
