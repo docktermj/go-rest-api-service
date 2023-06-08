@@ -233,13 +233,17 @@ func (restApiService *RestApiServiceImpl) getOptSzMeta(ctx context.Context, http
 func (restApiService *RestApiServiceImpl) getConfigurationHandle(ctx context.Context) (uintptr, error) {
 	var err error = nil
 	var result uintptr
+	var configurationString string
 	g2Config := restApiService.getG2config(ctx)
 	g2Configmgr := restApiService.getG2configmgr(ctx)
 	configID, err := g2Configmgr.GetDefaultConfigID(ctx)
 	if err != nil {
 		return result, err
 	}
-	configurationString, err := g2Configmgr.GetConfig(ctx, configID)
+	if configID == 0 {
+		return g2Config.Create(ctx)
+	}
+	configurationString, err = g2Configmgr.GetConfig(ctx, configID)
 	if err != nil {
 		return result, err
 	}
