@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/docktermj/go-rest-api-client v0.1.2
 	github.com/senzing/g2-sdk-go v0.6.4
-	github.com/senzing/go-logging v1.2.5
+	github.com/senzing/go-logging v1.2.6
 	github.com/senzing/go-observing v0.2.5
 	github.com/senzing/go-sdk-abstract-factory v0.3.0
 	google.golang.org/grpc v1.55.0
@@ -30,7 +30,7 @@ require (
 	github.com/senzing/g2-sdk-go-base v0.2.0 // indirect
 	github.com/senzing/g2-sdk-go-grpc v0.3.0 // indirect
 	github.com/senzing/g2-sdk-proto/go v0.0.0-20230526140633-b44eb0f20e1b // indirect
-	github.com/senzing/go-messaging v0.2.1 // indirect
+	github.com/senzing/go-messaging v0.2.2 // indirect
 	go.opentelemetry.io/otel v1.16.0 // indirect
 	go.opentelemetry.io/otel/metric v1.16.0 // indirect
 	go.opentelemetry.io/otel/trace v1.16.0 // indirect
