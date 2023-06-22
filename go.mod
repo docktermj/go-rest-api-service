@@ -8,7 +8,7 @@ require (
 	github.com/senzing/go-logging v1.2.5
 	github.com/senzing/go-observing v0.2.5
 	github.com/senzing/go-sdk-abstract-factory v0.3.0
-	google.golang.org/grpc v1.55.0
+	google.golang.org/grpc v1.56.1
 )
 
 require (
